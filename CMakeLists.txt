@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(Cryptolyser_Victim VERSION 0.0.0 LANGUAGES C)
+project(Cryptolyser_Doppelganger VERSION 0.0.0 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
 
