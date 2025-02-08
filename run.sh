@@ -15,7 +15,7 @@ echo "Setting cpu0 to performance mode."
 sudo sh -c 'echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor'
 
 echo "Running on cpu0."
-sudo nice -n -20 env $x86_no_hw_acc env $arm_no_hw_acc taskset 0x1 build-"$build_type"/Cryptolyser_Victim 8081
+sudo nice -n -20 env $x86_no_hw_acc env $arm_no_hw_acc taskset 0x1 build-"$build_type"/Cryptolyser_Doppelganger 8082
 
 #OPENSSL_armcap=0x1B: This forces OpenSSL to disable ARMv8 crypto extensions, effectively disabling hardware acceleration on ARM (including AES instructions on a Raspberry Pi 4).
 #OPENSSL_ia32cap="~0x200000200000000": Disables AES-NI on x86/x64 systems

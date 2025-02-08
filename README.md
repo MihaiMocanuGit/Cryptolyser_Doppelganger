@@ -1,4 +1,4 @@
-# Cryptolyser_Victim
+# Cryptolyser_Doppelganger
 
 ## The Cryptolyser project:
 Cryptolyser is a project implementing Bernstein's cache timing attack on modern hardware.
