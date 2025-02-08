@@ -1,5 +1,5 @@
-#ifndef CRYPTOLYSER_VICTIM_AES_AES_H_
-#define CRYPTOLYSER_VICTIM_AES_AES_H_
+#ifndef CRYPTOLYSER_DOPPELGANGER_AES_AES_H_
+#define CRYPTOLYSER_DOPPELGANGER_AES_AES_H_
 
 #define AES_BLOCK_SIZE 16
 #include <stdint.h>
@@ -29,4 +29,4 @@ void aes_clean(struct aes_ctx_t *ctx);
 
 void aes_log_status(FILE *stream);
 
-#endif // CRYPTOLYSER_VICTIM_AES_AES_H_
+#endif // CRYPTOLYSER_DOPPELGANGER_AES_AES_H_
