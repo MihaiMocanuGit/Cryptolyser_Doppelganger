@@ -68,9 +68,10 @@ int connection_reopen_socket(struct connection_t *connection)
 }
 
 int connection_receive_data_noalloc(struct connection_t *connection, uint32_t *packet_id,
-                                    uint8_t *data, uint32_t *data_len)
+                                    uint8_t key[PACKET_KEY_BYTE_SIZE], uint8_t *data,
+                                    uint32_t *data_len)
 {
-    struct connection_packet_t packet;
+    struct connection_key_packet_t packet;
     socklen_t sender_len = sizeof(connection->sender_addr);
     errno = 0;
     if (recvfrom(connection->socket, &packet, sizeof(packet), 0,
@@ -78,15 +79,16 @@ int connection_receive_data_noalloc(struct connection_t *connection, uint32_t *p
         return errno;
 
     *packet_id = be32toh(packet.packet_id);
+    memcpy(key, packet.key, PACKET_KEY_BYTE_SIZE);
     *data_len = be32toh(packet.data_length);
     memcpy(data, packet.byte_data, *data_len);
     return 0;
 }
 
-int connection_receive_data(struct connection_t *connection, uint32_t *packet_id, uint8_t **data,
-                            uint32_t *data_len)
+int connection_receive_data(struct connection_t *connection, uint32_t *packet_id,
+                            uint8_t key[PACKET_KEY_BYTE_SIZE], uint8_t **data, uint32_t *data_len)
 {
-    struct connection_packet_t packet;
+    struct connection_key_packet_t packet;
     socklen_t sender_len = sizeof(connection->sender_addr);
     errno = 0;
     if (recvfrom(connection->socket, &packet, sizeof(packet), 0,
@@ -94,6 +96,7 @@ int connection_receive_data(struct connection_t *connection, uint32_t *packet_id
         return errno;
 
     *packet_id = be32toh(packet.packet_id);
+    memcpy(key, packet.key, PACKET_KEY_BYTE_SIZE);
     *data_len = be32toh(packet.data_length);
     errno = 0;
     if (!(*data = malloc(*data_len)))
