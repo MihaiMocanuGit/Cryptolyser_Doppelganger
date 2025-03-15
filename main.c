@@ -38,26 +38,23 @@ int main(int argc, char **argv)
     struct aes_ctx_t *en = aes_ctx();
     struct aes_ctx_t *de = aes_ctx();
 
-    unsigned char key_data[] = {127, 128, 129, 130, 131, 132, 133, 134,
-                                135, 136, 137, 138, 139, 140, 141, 142};
-    if (aes_init(en, de, key_data))
-    {
-        perror("Could not initialize AES cipher.\n");
-        goto cleanup;
-    }
-
     printf("Listening on port %s.\n", argv[1]);
     for (;;)
     {
         uint8_t plaintext[CONNECTION_DATA_MAX_SIZE];
         uint32_t plaintext_len;
         uint32_t packet_id;
-        if (connection_receive_data_noalloc(server, &packet_id, plaintext, &plaintext_len))
+        uint8_t key[PACKET_KEY_BYTE_SIZE];
+        if (connection_receive_data_noalloc(server, &packet_id, key, plaintext, &plaintext_len))
         {
             perror("Could not receive data.\n");
             goto cleanup;
         }
-
+        unsigned char key_data[AES_BLOCK_SIZE];
+        if (aes_init(en, de, key_data)) {
+            perror("Could not initialize AES cipher.\n");
+            goto cleanup;
+        }
         printf("Packet Id: %u\t Data size: %u", packet_id, plaintext_len);
         // atomic_thread_fence will both be a compiler barrier (disallowing the compiler to reorder
         // instructions across the barrier) and a CPU barrier for that given thread (disallowing
