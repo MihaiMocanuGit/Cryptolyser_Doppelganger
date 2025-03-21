@@ -80,6 +80,7 @@ int main(int argc, char **argv)
         aes_set_iv(de, iv);
 
         printf("Packet Id: %u\t Data size: %u", packet_id, plaintext_len);
+        printHexLine("\t Key: ", key, PACKET_KEY_BYTE_SIZE);
         printHexLine("\t IV: ", iv, AES_BLOCK_BYTE_SIZE);
         // atomic_thread_fence will both be a compiler barrier (disallowing the compiler to reorder
         // instructions across the barrier) and a CPU barrier for that given thread (disallowing
