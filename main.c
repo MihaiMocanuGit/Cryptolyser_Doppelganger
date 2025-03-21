@@ -63,6 +63,7 @@ int main(int argc, char **argv)
             goto cleanup;
         }
         printf("Packet Id: %u\t Data size: %u", packet_id, plaintext_len);
+        printHexLine("\t Key: ", key, PACKET_KEY_BYTE_SIZE);
         // atomic_thread_fence will both be a compiler barrier (disallowing the compiler to reorder
         // instructions across the barrier) and a CPU barrier for that given thread (disallowing
         // the CPU to reorder instructions across the barrier).
