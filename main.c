@@ -7,6 +7,7 @@
 #include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static void printHexLine(const char *line_label, uint8_t *input, uint32_t len)
 {
@@ -36,31 +37,35 @@ int main(int argc, char **argv)
 
     struct aes_ctx_t *en = aes_ctx();
     struct aes_ctx_t *de = aes_ctx();
-
-    unsigned char key_data[] = {127, 128, 129, 130, 131, 132, 133, 134,
-                                135, 136, 137, 138, 139, 140, 141, 142};
-    if (aes_init(en, de, key_data))
+    uint8_t key[PACKET_KEY_BYTE_SIZE];
+    // We still aes_init the uninitialized key for the improbable case where packet_key and key are
+    // the same.
+    if (aes_init(en, de, key))
     {
         perror("Could not initialize AES cipher.\n");
         goto cleanup;
     }
-
     printf("Listening on port %s.\n", argv[1]);
     for (;;)
     {
         uint8_t plaintext[CONNECTION_DATA_MAX_SIZE];
         uint32_t plaintext_len;
         uint32_t packet_id;
-        uint8_t key[PACKET_KEY_BYTE_SIZE];
-        if (connection_receive_data_noalloc(server, &packet_id, key, plaintext, &plaintext_len))
+        uint8_t packet_key[PACKET_KEY_BYTE_SIZE];
+        if (connection_receive_data_noalloc(server, &packet_id, packet_key, plaintext,
+                                            &plaintext_len))
         {
             perror("Could not receive data.\n");
             goto cleanup;
         }
-        if (aes_init(en, de, key))
+        if (memcmp(key, packet_key, PACKET_KEY_BYTE_SIZE))
         {
-            perror("Could not initialize AES cipher.\n");
-            goto cleanup;
+            memcpy(key, packet_key, PACKET_KEY_BYTE_SIZE);
+            if (aes_init(en, de, key))
+            {
+                perror("Could not initialize AES cipher.\n");
+                goto cleanup;
+            }
         }
         printf("Packet Id: %u\t Data size: %u", packet_id, plaintext_len);
         printHexLine("\t Key: ", key, PACKET_KEY_BYTE_SIZE);
