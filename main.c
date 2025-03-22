@@ -35,11 +35,12 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    uint8_t key_buffers[2][PACKET_KEY_BYTE_SIZE] = {{0}};
+    unsigned current_buffer = 0;
+    uint8_t *key = key_buffers[current_buffer % 2];
+
     struct aes_ctx_t *en = aes_ctx();
     struct aes_ctx_t *de = aes_ctx();
-    uint8_t key[PACKET_KEY_BYTE_SIZE];
-    // We still aes_init the uninitialized key for the improbable case where packet_key and key are
-    // the same.
     if (aes_init(en, de, key))
     {
         perror("Could not initialize AES cipher.\n");
@@ -51,7 +52,7 @@ int main(int argc, char **argv)
         uint8_t plaintext[CONNECTION_DATA_MAX_SIZE];
         uint32_t plaintext_len;
         uint32_t packet_id;
-        uint8_t packet_key[PACKET_KEY_BYTE_SIZE];
+        uint8_t *packet_key = key_buffers[(current_buffer + 1) % 2];
         if (connection_receive_data_noalloc(server, &packet_id, packet_key, plaintext,
                                             &plaintext_len))
         {
@@ -60,10 +61,16 @@ int main(int argc, char **argv)
         }
         if (memcmp(key, packet_key, PACKET_KEY_BYTE_SIZE))
         {
-            memcpy(key, packet_key, PACKET_KEY_BYTE_SIZE);
+            current_buffer++;
+            key = packet_key;
+
+            aes_clean(en);
+            aes_clean(de);
+            en = aes_ctx();
+            de = aes_ctx();
             if (aes_init(en, de, key))
             {
-                perror("Could not initialize AES cipher.\n");
+                perror("Could not reinitialize AES cipher.\n");
                 goto cleanup;
             }
         }
