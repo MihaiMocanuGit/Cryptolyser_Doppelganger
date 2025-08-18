@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 project(
-  Cryptolyser_Victim
+  Cryptolyser_Doppelganger
   VERSION 1.1.0
   LANGUAGES C)
 

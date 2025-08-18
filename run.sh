@@ -3,7 +3,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-project="Cryptolyser_Victim"
+project="Cryptolyser_Doppelganger"
 
 # OpenSSL hardware acceleration flags
 x86_no_hw_acc="OPENSSL_ia32cap=~0x200000200000000"
