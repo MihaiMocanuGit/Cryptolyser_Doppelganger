@@ -41,9 +41,9 @@ static struct in_out_time_t
 
 int main(int argc, char **argv)
 {
-    if (argc != 3)
+    if (argc != 2)
     {
-        fprintf(stderr, "Incorrect program parameter: <PORT> <KEY>\n");
+        fprintf(stderr, "Incorrect program parameter: <PORT>\n");
         return EXIT_FAILURE;
     }
     aes_log_status(stdout);
@@ -55,20 +55,20 @@ int main(int argc, char **argv)
         connection_cleanup(&server);
         return EXIT_FAILURE;
     }
-
-    uint8_t key_data[PACKET_KEY_SIZE];
-    parse_key(argv[2], key_data);
-    print_hex_line("Key: ", key_data, PACKET_KEY_SIZE);
-    printf("\n");
+    // a buffer holding the currently used key and the key received from network.
+    uint8_t key_data_buffer[2][PACKET_KEY_SIZE] = {{0}};
+    uint8_t buffer_flag = 0; // will only take two values: 0 and 1
+    const uint8_t *key = key_data_buffer[buffer_flag];
+    uint8_t *next_key = key_data_buffer[buffer_flag ^ 1];
 
     srand(time(NULL));
 
     struct aes_ctx_t *en_ecb, *de_ecb;
-    construct_aes_ctx(&en_ecb, &de_ecb, key_data, packet_type_e_ECB);
+    construct_aes_ctx(&en_ecb, &de_ecb, key, packet_type_e_ECB);
     struct aes_ctx_t *en_cbc, *de_cbc;
-    construct_aes_ctx(&en_cbc, &de_cbc, key_data, packet_type_e_CBC);
+    construct_aes_ctx(&en_cbc, &de_cbc, key, packet_type_e_CBC);
     struct aes_ctx_t *en_ctr, *de_ctr;
-    construct_aes_ctx(&en_ctr, &de_ctr, key_data, packet_type_e_CTR);
+    construct_aes_ctx(&en_ctr, &de_ctr, key, packet_type_e_CTR);
 
     printf("Listening on port %s.\n", argv[1]);
     for (;;)
@@ -78,14 +78,27 @@ int main(int argc, char **argv)
         uint32_t packet_id;
         enum packet_type_e aes_type;
         if (connection_receive_data_noalloc(server, &packet_id, plaintext, &plaintext_len,
-                                            &aes_type, NULL))
+                                            &aes_type, next_key))
         {
             perror("Could not receive data.\n");
             goto cleanup;
         }
+        if (memcmp(key, next_key, PACKET_KEY_SIZE))
+        {
+            buffer_flag ^= 1;
+            key = key_data_buffer[buffer_flag];
+            next_key = key_data_buffer[buffer_flag ^ 1];
+            // reinit the ctx only when the received key differs from the previous one.
+            construct_aes_ctx(&en_ecb, &de_ecb, key, packet_type_e_ECB);
+            construct_aes_ctx(&en_cbc, &de_cbc, key, packet_type_e_CBC);
+            construct_aes_ctx(&en_ctr, &de_ctr, key, packet_type_e_CTR);
+        }
 #ifndef NDEBUG
         printf("Packet Id: %u\t Mode: %s\t Data size: %u\n", packet_id, packet_type_names[aes_type],
                plaintext_len);
+        print_hex_line("\tKey: ", key, PACKET_KEY_SIZE);
+        printf("\n");
+
 #endif
 
         uint8_t ciphertext[PACKET_BYTE_DATA_SIZE + AES_BLOCK_SIZE];
